@@ -1,8 +1,10 @@
+import 'package:chat_app/widgets/picker/user_image_picker.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 
 class AuthForm extends StatefulWidget {
   final isLoading;
-  final void Function(String email, String username, String password,
+  final void Function(String email, String username, String password,File? imagePath,
       bool isLogin, BuildContext context) submitFm;
 
   AuthForm(this.submitFm, this.isLoading);
@@ -16,10 +18,23 @@ class _AuthFormState extends State<AuthForm> {
   var _userEmail = '';
   var _userUsername = '';
   var _userPassword = '';
+  File? _userImageFile;
+
+  void _pickedImage(File image) {
+    _userImageFile = image;
+  }
 
   void _trySubmit() {
     FocusScope.of(context).unfocus();
     final _isValid = _formKey.currentState!.validate();
+    if (_userImageFile == null && !_isLogin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Theme.of(context).errorColor,
+            content: Text('Please add a profile picture')));
+      return;
+    }
+
     if (_isValid) {
       _formKey.currentState!.save();
 
@@ -27,6 +42,7 @@ class _AuthFormState extends State<AuthForm> {
         _userEmail.trim(),
         _userUsername.trim(),
         _userPassword.trim(),
+        _userImageFile,
         _isLogin,
         context,
       );
@@ -46,8 +62,11 @@ class _AuthFormState extends State<AuthForm> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (!_isLogin) UserImagePicker(_pickedImage),
                   TextFormField(
                     key: ValueKey('email'),
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.none,
                     validator: (value) {
                       if (value == null ||
                           value.isEmpty ||
@@ -64,6 +83,9 @@ class _AuthFormState extends State<AuthForm> {
                   ),
                   if (!_isLogin)
                     TextFormField(
+                    autocorrect: true,
+                    enableSuggestions: true,
+                    textCapitalization: TextCapitalization.words,
                       key: ValueKey('username'),
                       validator: (value) {
                         if (value == null ||
